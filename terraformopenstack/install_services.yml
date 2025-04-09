@@ -1,0 +1,57 @@
+- name: Installer NGINX sur les serveurs web
+  hosts: web
+  become: yes
+  tasks:
+    - name: Mettre à jour la liste des paquets
+      apt:
+        update_cache: yes
+
+    - name: Installer nginx
+      apt:
+        name: nginx
+        state: present
+
+- name: Installer et configurer WireGuard sur les serveurs VPN
+  hosts: vpn
+  become: yes
+  tasks:
+    - name: Mettre à jour la liste des paquets
+      apt:
+        update_cache: yes
+
+    - name: Installer WireGuard
+      apt:
+        name: wireguard
+        state: present
+
+    - name: Créer le répertoire WireGuard s'il n'existe pas
+      file:
+        path: /etc/wireguard
+        state: directory
+        mode: '0700'
+
+    - name: Générer la clé privée
+      command: wg genkey
+      register: private_key
+      changed_when: false
+
+    - name: Enregistrer la clé privée
+      copy:
+        content: "{{ private_key.stdout }}"
+        dest: /etc/wireguard/privatekey
+        mode: '0600'
+
+    - name: Générer la clé publique
+      command: /bin/bash -c "echo '{{ private_key.stdout }}' | wg pubkey"
+      register: public_key
+      changed_when: false
+
+    - name: Enregistrer la clé publique
+      copy:
+        content: "{{ public_key.stdout }}"
+        dest: /etc/wireguard/publickey
+        mode: '0644'
+
+    - name: Afficher la clé publique WireGuard du serveur VPN
+      debug:
+        msg: "Clé publique WireGuard : {{ public_key.stdout }}"

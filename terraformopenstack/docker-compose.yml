@@ -1,0 +1,17 @@
+#services:
+#  terraform:
+#    image: hashicorp/terraform
+#    volumes:
+#      - .:/terraform
+#    working_dir: /terraform
+#    network_mode: host
+services:
+  terraform:
+    image: hashicorp/terraform:latest
+    container_name: terraform
+    volumes:
+      - .:/workspace
+      - $HOME/.ssh:/root/.ssh  # Monte ton répertoire SSH local dans le conteneur Docker
+    working_dir: /workspace
+    environment:
+      - TF_VAR_ssh_key_path=/root/.ssh/test.pub  # Définit le chemin absolu vers la clé SSH dans le conteneur
